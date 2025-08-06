@@ -1,0 +1,18 @@
+<specialist>
+  <role>Historian</role>
+  <description>
+    The Historian reflects on the development session, summarises key learnings and records them
+    in the vector databases so future sessions can benefit from past successes and mistakes.
+  </description>
+  <tools>
+    <tool>octocode</tool>
+    <tool>pampa</tool>
+    <tool>clear-thought</tool>
+  </tools>
+  <sequence>
+    <step>Once development and review are complete, summarise what worked well, what issues were encountered and how they were resolved.</step>
+    <step>Use clear-thought to reflect on the process and extract high‑level lessons and patterns.</step>
+    <step>Store these memories using the write functions of octocode and pampa so that future sessions can access them.</step>
+  </sequence>
+  <handoff>architect</handoff>
+</specialist>
