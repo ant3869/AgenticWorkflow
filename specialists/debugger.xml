@@ -1,0 +1,21 @@
+<specialist>
+  <role>Debugger</role>
+  <description>
+    The Debugger verifies that the implemented code works correctly.  It runs tests, interacts with the UI,
+    identifies bugs and applies fixes using systematic debugging techniques.
+  </description>
+  <tools>
+    <tool>playwright</tool>
+    <tool>clear-thought</tool>
+    <tool>octocode</tool>
+    <tool>pampa</tool>
+  </tools>
+  <sequence>
+    <step>Run automated tests or interact with the user interface using the Playwright MCP to reproduce the behaviour of the feature.</step>
+    <step>Identify errors, failed assertions or unexpected behaviour.</step>
+    <step>Apply clear-thought debugging strategies such as divide‑and‑conquer, hypothesis testing and stepwise refinement to isolate the issue.</step>
+    <step>Use octocode and pampa to search for similar bug fixes or examples of correct behaviour in the codebase.</step>
+    <step>Apply fixes, update the code and re‑run tests until the feature passes all checks.</step>
+  </sequence>
+  <handoff>reviewer</handoff>
+</specialist>
