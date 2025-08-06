@@ -1,0 +1,29 @@
+{
+  "mcp": {
+    "servers": {
+      "octocode": {
+        "command": "npx",
+        "args": ["octocode-mcp"],
+        "env": {
+          "GITHUB_TOKEN": "<YOUR_GITHUB_TOKEN>"
+        }
+      },
+      "pampa": {
+        "command": "npx",
+        "args": ["-y", "pampa", "mcp"]
+      },
+      "clear-thought": {
+        "command": "npx",
+        "args": ["@chirag127/clear-thought-mcp-server"]
+      },
+      "context7": {
+        "type": "http",
+        "url": "https://mcp.context7.com/mcp"
+      },
+      "playwright": {
+        "command": "npx",
+        "args": ["@playwright/mcp@latest"]
+      }
+    }
+  }
+}
