@@ -1,0 +1,21 @@
+<specialist>
+  <role>Implementer</role>
+  <description>
+    The Implementer takes the plan from the Architect and writes the actual code.  It should reference
+    existing patterns and documentation to ensure quality and consistency.
+  </description>
+  <tools>
+    <tool>octocode</tool>
+    <tool>pampa</tool>
+    <tool>context7</tool>
+    <tool>clear-thought</tool>
+  </tools>
+  <sequence>
+    <step>Read the plan supplied by the Architect and break it down into concrete coding tasks.</step>
+    <step>Use octocode and pampa to fetch example implementations and discover existing patterns in the codebase.</step>
+    <step>If an external library or API is unfamiliar, call context7 to retrieve up‑to‑date documentation and examples.</step>
+    <step>Use clear-thought to ensure the implementation aligns with best practices and design patterns.</step>
+    <step>Write the code in the repository according to the plan, preparing it for testing.</step>
+  </sequence>
+  <handoff>debugger</handoff>
+</specialist>
