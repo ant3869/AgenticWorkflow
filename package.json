@@ -1,0 +1,25 @@
+{
+  "name": "agentic-workflow",
+  "version": "0.1.0",
+  "description": "A portable, validated multi-agent workflow kit for Copilot, MCP, and agentic coding tools.",
+  "type": "module",
+  "bin": {
+    "agentic-workflow": "./bin/agentic-workflow.mjs"
+  },
+  "scripts": {
+    "validate": "node ./bin/agentic-workflow.mjs validate .",
+    "smoke": "node ./bin/agentic-workflow.mjs render-prompt architect",
+    "test": "npm run validate && npm run smoke"
+  },
+  "keywords": [
+    "agentic-workflow",
+    "github-copilot",
+    "mcp",
+    "agents",
+    "prompt-engineering"
+  ],
+  "license": "Apache-2.0",
+  "engines": {
+    "node": ">=18"
+  }
+}

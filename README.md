@@ -1,111 +1,136 @@
-# Multi‑Agent Workflow for VS Code & GitHub Copilot
+# Agentic Workflow
 
-This repository contains all the configuration files and instructions you need to implement a multi‑agent coding workflow using GitHub Copilot Chat and several Model Context Protocol (MCP) servers.  The design is inspired by a community workflow that divides tasks into specialists (architect, implementer, debugger, reviewer and historian) and uses vector databases and mental models to improve code generation and reliability.
+Agentic Workflow is a portable operating model for AI-assisted software delivery. It gives Copilot, MCP-enabled IDEs, and command-line coding agents a shared contract for planning, implementation, debugging, review, and durable memory.
 
-## Overview
+The first version of this repo was a set of specialist prompts. This version turns it into a usable kit:
 
-The workflow is built around the following components:
+- A versioned workflow manifest: `workflow/default.workflow.json`
+- Specialist prompt definitions: `specialists/*.xml`
+- Copilot and agent instruction templates: `templates/`
+- A dependency-free CLI for validation and installation: `bin/agentic-workflow.mjs`
+- CI validation: `.github/workflows/validate.yml`
+- Adoption and operating docs: `docs/`
 
-* **MCP servers** – external services that extend Copilot Chat with context retrieval, semantic search, structured thinking, documentation access and UI automation.  These are configured in `.vscode/mcp.json`.
-* **Specialist definitions** – XML files in the `specialists/` folder that describe the role, tools, sequence of actions and handoff for each specialist.  Copilot Chat uses these definitions to understand what each agent should do.
-* **Global instructions** – the `instructions.md` file contains general guidelines for tool usage, context management and handoff protocols.  It is intentionally short so that it fits within a large‑language‑model context window.
-* **Your project codebase** – the actual application code you want to work on.  This setup does not include your project files; you should open a project in VS Code and copy these configuration files into the root.
+## Why It Matters
 
-## Installing MCP servers
+Agentic development does not need more vague roleplay. It needs handoffs that survive context resets, reviewers that see evidence, and memory that stores decisions instead of transcripts.
 
-1. Make sure you have Node 18+ installed.
-2. Obtain any necessary API keys:
-   * **GitHub PAT** – required by Octocode to access private repositories.
-   * **Voyage AI API key** – optional; Octocode defaults to Voyage’s 200 million free embedding tokens per account.
-3. Copy the `.vscode/mcp.json` file into the root of your project.  This file declares the MCP servers used by the workflow:
+Agentic Workflow is built around five roles:
 
-```json
-{
-  "mcp": {
-    "servers": {
-      "octocode": {
-        "command": "npx",
-        "args": ["octocode-mcp"],
-        "env": {
-          "GITHUB_TOKEN": "<YOUR_GITHUB_TOKEN>"
-        }
-      },
-      "pampa": {
-        "command": "npx",
-        "args": ["-y", "pampa", "mcp"]
-      },
-      "clear-thought": {
-        "command": "npx",
-        "args": ["@chirag127/clear-thought-mcp-server"]
-      },
-      "context7": {
-        "type": "http",
-        "url": "https://mcp.context7.com/mcp"
-      },
-      "playwright": {
-        "command": "npx",
-        "args": ["@playwright/mcp@latest"]
-      }
-    }
-  }
-}
+| Role | Job | Output |
+| --- | --- | --- |
+| Architect | Shape ambiguous work into a scoped plan | Acceptance criteria, plan, risks |
+| Implementer | Make the smallest coherent change | Diff, docs, verification notes |
+| Debugger | Prove behavior and isolate failures | Reproduction, root cause, check output |
+| Reviewer | Find correctness and maintainability risks | Ordered findings and residual risk |
+| Historian | Preserve durable learning | Decisions, outcomes, follow-ups |
+
+Each role has a handoff target and quality gates in the manifest. The workflow is complete only when the next role has enough evidence to continue without replaying the full chat.
+
+## Quick Start
+
+Validate this repository:
+
+```bash
+npm test
 ```
 
-Edit the `<YOUR_GITHUB_TOKEN>` placeholder with a valid token or remove the `env` entry if you rely on the `gh` CLI for authentication.  After saving, reload VS Code to launch the servers automatically.
+Install the workflow into another repository:
 
-## Indexing your project
+```bash
+node ./bin/agentic-workflow.mjs init /path/to/your/repo
+```
 
-Before using the workflow, index your codebase so that Octocode and PAMPA can answer semantic queries:
+Validate an installed repository:
 
-1. Open a terminal in your project and run:
+```bash
+node ./bin/agentic-workflow.mjs validate /path/to/your/repo
+```
 
-   ```bash
-   npx octocode-mcp index
-   ```
+Render a role prompt from the manifest:
 
-   This step downloads your repository metadata and stores embeddings.  If Octocode prompts for authentication, provide your GitHub token.
+```bash
+node ./bin/agentic-workflow.mjs render-prompt architect
+```
 
-2. Run the PAMPA indexing command:
+## What Gets Installed
 
-   ```bash
-   npx pampa mcp index_project
-   ```
+`init` writes the portable workflow surface into a target repository:
 
-   PAMPA will scan your files, split them into meaningful chunks, assign semantic tags and build a local index in `pampa.db`.  You only need to do this when the project changes significantly.
+- `.agentic/workflow.json`
+- `AGENTS.md`
+- `.github/copilot-instructions.md`
+- `.github/instructions/tests.instructions.md`
+- `.github/prompts/architect.prompt.md`
+- `.github/prompts/implementer.prompt.md`
+- `.github/prompts/debugger.prompt.md`
+- `.github/prompts/reviewer.prompt.md`
+- `.github/prompts/historian.prompt.md`
+- `.vscode/mcp.json`
 
-## Creating specialist prompts
+Use `--force` to overwrite existing files intentionally.
 
-Each specialist is defined in an XML file under `specialists/`.  You can load a specialist by copying its contents into Copilot Chat or by creating a snippet that inserts the XML when you type a slash command (e.g. `/architect`).  The key fields are:
+## Repository Layout
 
-| File | Role | Purpose | Primary tools | Handoff |
-|------|------|---------|--------------|---------|
-| `architect.xml` | Architect | Understand the feature request, search for relevant context and produce a plan | octocode, pampa, clear‑thought, context7 | implementer |
-| `implementer.xml` | Implementer | Generate code from the plan using examples and documentation | octocode, pampa, context7, clear‑thought | debugger |
-| `debugger.xml` | Debugger | Run tests and fix bugs using Playwright and debugging strategies | playwright, clear‑thought, octocode, pampa | reviewer |
-| `reviewer.xml` | Reviewer | Check code quality and adherence to patterns | octocode, pampa, clear‑thought | historian |
-| `historian.xml` | Historian | Summarise the session and store learnings | octocode, pampa, clear‑thought | architect |
+```text
+.
+├── bin/
+│   └── agentic-workflow.mjs
+├── docs/
+│   ├── adoption-guide.md
+│   └── operating-model.md
+├── examples/
+│   └── .agentic/session.md
+├── specialists/
+│   ├── architect.xml
+│   ├── implementer.xml
+│   ├── debugger.xml
+│   ├── reviewer.xml
+│   └── historian.xml
+├── templates/
+│   ├── AGENTS.md
+│   ├── .github/
+│   └── .vscode/
+└── workflow/
+    ├── agentic-workflow.schema.json
+    └── default.workflow.json
+```
 
-To use a specialist, paste its XML into Copilot Chat along with your natural‑language request.  The specialist’s `<sequence>` defines the steps the model should follow, and the `<handoff>` indicates which specialist should be invoked next.
+## Current Platform Alignment
 
-## Running through the workflow
+As of `2026-04-30T20:41:26-05:00`, current official documentation supports the direction of this repo:
 
-1. **Start with the Architect.** Provide a short description of the feature you want to build, then insert the contents of `architect.xml`.  Copilot Chat will call Octocode and PAMPA to gather context, process it through Clear Thought, and return a high‑level plan.
+- GitHub Copilot supports repository instructions, path-specific instructions, prompt files, and agent instruction files such as `AGENTS.md`.
+- VS Code recommends file-based custom instructions and prompt files over older settings-based generation instructions.
+- MCP defines prompts as user-controlled reusable templates and tools as model-controlled external actions with a human approval surface.
 
-2. **Invoke the Implementer.** When you receive the plan, clear the chat context (to keep tokens low) and then paste the plan along with `implementer.xml`.  Copilot will generate code using Octocode and PAMPA for context and call Context7 when documentation is needed.  It should produce commit‑ready code.
+Agentic Workflow uses those native surfaces instead of requiring a proprietary runtime.
 
-3. **Debug.** Insert `debugger.xml` to run tests or interact with the UI via Playwright.  Copilot will identify and fix bugs using Clear Thought’s debugging strategies and additional context from Octocode/PAMPA.
+## MCP Configuration
 
-4. **Review.** Paste `reviewer.xml` to request a final code review.  Copilot will compare your changes with existing patterns and suggest improvements.
+The repo keeps `.vscode/mcp.json` as a starter configuration. The install template is intentionally minimal:
 
-5. **Summarise.** Use `historian.xml` to summarise what worked and what didn’t.  It will store this information via Octocode and PAMPA for future use.  After this, clear the chat context; the next session can query the stored memories.
+- Context7 for current documentation lookup.
+- Playwright MCP for browser/UI verification.
 
-6. **Iterate.** Repeat the process for new features or tasks.  As your vector databases accumulate more context, the AI’s performance should improve.
+Add Octocode, PAMPA, Clear Thought, or other MCP servers when your team has a concrete evidence need for them. Keep tokens and credentials outside the repository.
 
-## Tips
+## Documentation
 
-* Keep your prompts lean—avoid multi‑page descriptions or large snippets of code.  Provide just enough information for the specialist to act.
-* Use Context7 sparingly.  Each call adds tokens.  Only request documentation when the model is uncertain about a library or API.
-* Store common mistakes and patterns in Octocode and PAMPA.  Retrieval helps the model avoid repeating old errors.
-* Reset the chat context regularly.  Once a specialist finishes, summarise and start a new chat so you don’t exceed the context window.
+- [Operating Model](docs/operating-model.md)
+- [Adoption Guide](docs/adoption-guide.md)
+- [Example Session Handoff](examples/.agentic/session.md)
 
-This repository provides a blueprint for building an effective multi‑agent workflow with GitHub Copilot Chat.  Feel free to refine the specialists, add new tools and modify the sequence to suit your project’s needs.
+## Development
+
+This project intentionally has no runtime dependencies.
+
+```bash
+npm run validate
+npm run smoke
+npm test
+```
+
+## License
+
+Apache-2.0
