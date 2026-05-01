@@ -1,0 +1,113 @@
+{
+  "$schema": "./agentic-workflow.schema.json",
+  "name": "Agentic Workflow",
+  "version": "0.1.0",
+  "principles": [
+    "Each agent has one job, one output contract, and one handoff target.",
+    "No phase is complete until the next phase has enough evidence to continue without replaying the full chat.",
+    "Plans, code, tests, reviews, and memory updates are separate artifacts.",
+    "The workflow prefers small verified changes over broad unverified rewrites.",
+    "Durable memory records decisions and evidence, not private secrets or raw transcripts."
+  ],
+  "roles": [
+    {
+      "id": "architect",
+      "mission": "Convert an ambiguous request into a scoped implementation plan with acceptance criteria.",
+      "may": ["Read code", "search docs", "ask targeted questions", "write plans"],
+      "mustNot": ["Edit production code", "claim feasibility without inspected evidence"],
+      "tools": ["repo search", "MCP resources", "Context7 or official docs", "issue tracker"],
+      "outputs": ["problem statement", "constraints", "acceptance criteria", "implementation plan", "risk list"],
+      "handoffTo": "implementer"
+    },
+    {
+      "id": "implementer",
+      "mission": "Make the smallest coherent code and documentation change that satisfies the plan.",
+      "may": ["Edit code", "add focused tests", "update docs", "run local checks"],
+      "mustNot": ["Silently broaden scope", "revert unrelated changes", "skip verification notes"],
+      "tools": ["editor", "test runner", "formatter", "official library docs"],
+      "outputs": ["changed files", "implementation notes", "local verification results"],
+      "handoffTo": "debugger"
+    },
+    {
+      "id": "debugger",
+      "mission": "Reproduce failures, isolate causes, and prove the implemented behavior works.",
+      "may": ["Run tests", "inspect logs", "use browser automation", "patch defects"],
+      "mustNot": ["Treat absence of an error as proof", "hide flaky or skipped checks"],
+      "tools": ["test runner", "Playwright MCP", "logs", "debugger"],
+      "outputs": ["reproduction steps", "fix notes", "passing and failing check output"],
+      "handoffTo": "reviewer"
+    },
+    {
+      "id": "reviewer",
+      "mission": "Evaluate the change for correctness, maintainability, security, and fit with project patterns.",
+      "may": ["Read diffs", "request changes", "run targeted checks", "approve with caveats"],
+      "mustNot": ["Rewrite without stating review findings", "focus on style over correctness"],
+      "tools": ["git diff", "static analysis", "project docs", "security checklist"],
+      "outputs": ["ordered findings", "residual risks", "approval or required changes"],
+      "handoffTo": "historian"
+    },
+    {
+      "id": "historian",
+      "mission": "Preserve durable project learning after a completed workflow.",
+      "may": ["Summarize outcomes", "record decisions", "update runbooks", "open follow-up issues"],
+      "mustNot": ["Store secrets", "dump raw chat", "record unverified claims as fact"],
+      "tools": ["memory store", "docs", "issue tracker"],
+      "outputs": ["decision log update", "follow-up list", "lessons learned"],
+      "handoffTo": "architect"
+    }
+  ],
+  "phases": [
+    {
+      "id": "shape",
+      "role": "architect",
+      "entryCriteria": ["A user goal or issue exists."],
+      "exitCriteria": ["Acceptance criteria are explicit.", "A bounded plan exists.", "Known risks are listed."]
+    },
+    {
+      "id": "build",
+      "role": "implementer",
+      "entryCriteria": ["The plan names files or modules to inspect.", "Success criteria are testable."],
+      "exitCriteria": ["Code or docs are changed.", "Local checks have been attempted.", "Deviation from plan is documented."]
+    },
+    {
+      "id": "prove",
+      "role": "debugger",
+      "entryCriteria": ["There is an implementation to verify."],
+      "exitCriteria": ["Relevant checks pass or failures are isolated.", "Manual reproduction steps are documented when automated checks are insufficient."]
+    },
+    {
+      "id": "review",
+      "role": "reviewer",
+      "entryCriteria": ["A diff and verification evidence exist."],
+      "exitCriteria": ["Findings are resolved or explicitly accepted.", "Residual risk is visible."]
+    },
+    {
+      "id": "remember",
+      "role": "historian",
+      "entryCriteria": ["The change is complete or intentionally paused."],
+      "exitCriteria": ["Decision and outcome notes are stored.", "Follow-ups are captured."]
+    }
+  ],
+  "qualityGates": [
+    {
+      "id": "scope",
+      "description": "The work has a bounded goal and explicit non-goals.",
+      "evidence": ["issue link, user request, or plan section"]
+    },
+    {
+      "id": "context",
+      "description": "The agent inspected the relevant local code and current external docs when recency matters.",
+      "evidence": ["file references", "source URLs with access dates", "version notes"]
+    },
+    {
+      "id": "verification",
+      "description": "The implementation was checked with the strongest feasible local signal.",
+      "evidence": ["test output", "typecheck output", "build output", "manual reproduction notes"]
+    },
+    {
+      "id": "handoff",
+      "description": "The next agent can continue from compact durable state.",
+      "evidence": ["changed files", "open risks", "next action"]
+    }
+  ]
+}
